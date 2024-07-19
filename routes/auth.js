@@ -143,6 +143,8 @@ router.post('/verify_2fa/:userId', async (req, res) => {
             token
         });
         if (verified) {
+            req.session.userId = user._id; // Assignez l'ID de l'utilisateur à la session
+            req.session.is2FAAuthenticated = true; // Marquez l'utilisateur comme ayant passé la vérification 2FA
             res.redirect('/success');
         } else {
             res.redirect(`/auth/verify_2fa/${user._id}?error=Invalid 2FA token`);
