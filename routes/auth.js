@@ -5,24 +5,28 @@ const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
 const path = require('path');
 
-// Route d'enregistrement
+// Handle user registration
 router.post('/register', async (req, res) => {
     try {
         const { username, email, password } = req.body;
         console.log('Received values:', username, email, password);
 
+        // Check if all required fields are provided
         if (!username || !email || !password) {
             console.log('Validation error: All fields are required');
             return res.redirect('/register?error=All fields are required');
         }
 
+        // Generate a new 2FA secret and QR code
         const secret = speakeasy.generateSecret({ name: username });
         const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
 
+        // Create a new user with the provided details and save to the database
         const user = new User({ username, email, fa_secret: secret.base32 });
         await user.setPassword(password);
         await user.save();
 
+        // Redirect to QR code display page
         res.redirect(`/auth/show_qr?qrCodeUrl=${encodeURIComponent(qrCodeUrl)}`);
     } catch (error) {
         console.error('Registration failed:', error);
@@ -30,7 +34,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Route pour afficher le QR code
+// Display the QR code for 2FA setup
 router.get('/show_qr', (req, res) => {
     const qrCodeUrl = req.query.qrCodeUrl;
     res.send(`
@@ -53,7 +57,7 @@ router.get('/show_qr', (req, res) => {
     `);
 });
 
-// Route de connexion
+// Display the login page with optional error message
 router.get('/login', (req, res) => {
     const { error } = req.query;
     res.send(`
@@ -79,33 +83,40 @@ router.get('/login', (req, res) => {
     `);
 });
 
+// Handle user login
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
         console.log('Received login values:', email, password);
 
+        // Find the user by email
         const user = await User.findOne({ email });
         if (user) {
+            // Check if the provided password is correct
             const isPasswordValid = await user.checkPassword(password);
             console.log('Password is valid:', isPasswordValid);
 
             if (isPasswordValid) {
+                // Redirect to 2FA verification page if login is successful
                 const userId = encodeURIComponent(user._id);
                 res.redirect(`/auth/verify_2fa/${userId}`);
                 console.log(user._id);
                 console.log(userId, 'im the right user id');
             } else {
+                // Redirect with an error message if password is invalid
                 res.redirect('/auth/login?error=Invalid password');
             }
         } else {
+            // Redirect with an error message if user is not found
             res.redirect('/auth/login?error=User not found');
         }
     } catch (error) {
+        // Redirect with an error message if login fails
         res.redirect(`/auth/login?error=Login failed: ${error.message}`);
     }
 });
 
-// Route de vérification 2FA
+// Display the 2FA verification page
 router.get('/verify_2fa/:userId', (req, res) => {
     const { error } = req.query;
     res.send(`
@@ -129,6 +140,7 @@ router.get('/verify_2fa/:userId', (req, res) => {
     `);
 });
 
+// Handle 2FA token verification
 router.post('/verify_2fa/:userId', async (req, res) => {
     try {
         const { token } = req.body;
@@ -137,24 +149,29 @@ router.post('/verify_2fa/:userId', async (req, res) => {
             return res.status(404).send('User not found');
         }
         console.log(user._id, 'im the idddddd');
+        
+        // Verify the provided 2FA token
         const verified = speakeasy.totp.verify({
             secret: user.fa_secret,
             encoding: 'base32',
             token
         });
         if (verified) {
-            req.session.userId = user._id; // Assignez l'ID de l'utilisateur à la session
-            req.session.is2FAAuthenticated = true; // Marquez l'utilisateur comme ayant passé la vérification 2FA
+            // Set session variables and redirect to success page if token is valid
+            req.session.userId = user._id;
+            req.session.is2FAAuthenticated = true;
             res.redirect('/success');
         } else {
+            // Redirect with an error message if token is invalid
             res.redirect(`/auth/verify_2fa/${user._id}?error=Invalid 2FA token`);
         }
     } catch (error) {
+        // Send error message if 2FA verification fails
         res.status(500).send('2FA verification failed: ' + error.message);
     }
 });
 
-// Route de succès
+// Success route
 router.get('/success', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'success.html'));
 });

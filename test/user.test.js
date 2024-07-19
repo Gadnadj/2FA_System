@@ -4,8 +4,7 @@ const app = require('../app');
 const User = require('../routes/models/user');
 const speakeasy = require('speakeasy');
 
-jest.setTimeout(20000); // Augmenter le délai d'attente global à 20 secondes
-
+jest.setTimeout(20000); // Increase global timeout to 20 seconds
 
 beforeAll(async () => {
     const url = process.env.DATABASE_URL;
@@ -18,6 +17,7 @@ afterAll(async () => {
 
 describe('User Registration and Login', () => {
     beforeEach(async () => {
+        // Clear all users before each test
         await User.deleteMany({});
     });
 
@@ -30,14 +30,17 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
 
-        expect(response.status).toBe(302); // Redirection vers le QR code
+        // Expect a redirection response (302)
+        expect(response.status).toBe(302);
+        
+        // Check if the user was successfully created in the database
         const user = await User.findOne({ email: 'testuser@example.com' });
         expect(user).not.toBeNull();
         expect(user.username).toBe('testuser');
     });
 
     it('should login a user', async () => {
-        // D'abord, enregistrons un utilisateur
+        // First, register a user
         await request(app)
             .post('/auth/register')
             .send({
@@ -46,7 +49,7 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
 
-        // Ensuite, essayons de nous connecter avec ces informations
+        // Then, try to log in with the registered credentials
         const response = await request(app)
             .post('/auth/login')
             .send({
@@ -54,12 +57,13 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
 
-        expect(response.status).toBe(302); // Redirection vers la vérification 2FA ou la page suivante
-        expect(response.header.location).toMatch(/\/auth\/verify_2fa\/.+/); // Vérifie que la redirection est vers la page de vérification 2FA
+        // Expect a redirection response (302) to the 2FA verification page
+        expect(response.status).toBe(302);
+        expect(response.header.location).toMatch(/\/auth\/verify_2fa\/.+/);
     });
 
     it('should not login a user with wrong password', async () => {
-        // D'abord, enregistrons un utilisateur
+        // First, register a user
         await request(app)
             .post('/auth/register')
             .send({
@@ -68,7 +72,7 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
 
-        // Ensuite, essayons de nous connecter avec un mot de passe incorrect
+        // Then, try to log in with an incorrect password
         const response = await request(app)
             .post('/auth/login')
             .send({
@@ -76,12 +80,13 @@ describe('User Registration and Login', () => {
                 password: 'wrongpassword'
             });
 
-        expect(response.status).toBe(302); // Redirection vers la page de connexion avec un message d'erreur
+        // Expect a redirection response (302) with an error message
+        expect(response.status).toBe(302);
         expect(response.header.location).toBe('/auth/login?error=Invalid%20password');
     });
 
     it('should verify 2FA token successfully', async () => {
-        // D'abord, enregistrons un utilisateur
+        // First, register a user
         const responseRegister = await request(app)
             .post('/auth/register')
             .send({
@@ -96,19 +101,20 @@ describe('User Registration and Login', () => {
             encoding: 'base32'
         });
     
-        // Ensuite, essayons de vérifier le code 2FA valide
+        // Then, try to verify the valid 2FA code
         const responseVerify = await request(app)
             .post(`/auth/verify_2fa/${user._id}`)
             .send({
                 token
             });
     
-        expect(responseVerify.status).toBe(302); // Redirection vers la page de succès
+        // Expect a redirection response (302) to the success page
+        expect(responseVerify.status).toBe(302);
         expect(responseVerify.header.location).toBe('/success');
     });
 
     it('should not verify 2FA token with invalid token', async () => {
-        // D'abord, enregistrons un utilisateur
+        // First, register a user
         const responseRegister = await request(app)
             .post('/auth/register')
             .send({
@@ -119,19 +125,20 @@ describe('User Registration and Login', () => {
     
         const user = await User.findOne({ email: 'testuser@example.com' });
     
-        // Ensuite, essayons de vérifier un code 2FA invalide
+        // Then, try to verify an invalid 2FA code
         const responseVerify = await request(app)
             .post(`/auth/verify_2fa/${user._id}`)
             .send({
                 token: 'invalidtoken'
             });
     
-        expect(responseVerify.status).toBe(302); // Redirection vers la page de vérification 2FA avec un message d'erreur
+        // Expect a redirection response (302) with an error message
+        expect(responseVerify.status).toBe(302);
         expect(responseVerify.header.location).toBe(`/auth/verify_2fa/${user._id}?error=Invalid%202FA%20token`);
     });
 
     it('should not register a user with missing fields', async () => {
-        // Essayons de nous enregistrer sans email
+        // Try to register without providing an email
         const response = await request(app)
             .post('/auth/register')
             .send({
@@ -139,12 +146,13 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
     
-        expect(response.status).toBe(302); // Redirection vers la page d'enregistrement avec un message d'erreur
+        // Expect a redirection response (302) with an error message
+        expect(response.status).toBe(302);
         expect(response.header.location).toBe('/register?error=All%20fields%20are%20required');
     });
 
     it('should not login a user with unregistered email', async () => {
-        // Essayons de nous connecter avec un email non enregistré
+        // Try to log in with an email that does not exist in the database
         const response = await request(app)
             .post('/auth/login')
             .send({
@@ -152,26 +160,28 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
     
-        expect(response.status).toBe(302); // Redirection vers la page de connexion avec un message d'erreur
+        // Expect a redirection response (302) with an error message
+        expect(response.status).toBe(302);
         expect(response.header.location).toBe('/auth/login?error=User%20not%20found');
     });
 
     it('should show error messages for invalid registration', async () => {
-        // Essayons de nous inscrire sans certains champs requis
+        // Try to register without providing an email
         const response = await request(app)
             .post('/auth/register')
             .send({
                 username: 'testuser',
-                email: '', // Email manquant
+                email: '', // Missing email
                 password: 'testpassword'
             });
     
-        expect(response.status).toBe(302); // Redirection vers la page d'inscription avec un message d'erreur
+        // Expect a redirection response (302) with an error message
+        expect(response.status).toBe(302);
         expect(response.header.location).toBe('/register?error=All%20fields%20are%20required');
     });
 
     it('should not login with an empty password', async () => {
-        // D'abord, enregistrons un utilisateur
+        // First, register a user
         await request(app)
             .post('/auth/register')
             .send({
@@ -180,7 +190,7 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
     
-        // Ensuite, essayons de nous connecter avec un mot de passe vide
+        // Then, try to log in with an empty password
         const response = await request(app)
             .post('/auth/login')
             .send({
@@ -188,12 +198,13 @@ describe('User Registration and Login', () => {
                 password: ''
             });
     
-        expect(response.status).toBe(302); // Redirection vers la page de connexion avec un message d'erreur
+        // Expect a redirection response (302) with an error message
+        expect(response.status).toBe(302);
         expect(response.header.location).toBe('/auth/login?error=Invalid%20password');
     });
 
     it('should redirect to the success page after a successful login', async () => {
-        // Enregistrer un utilisateur
+        // Register a user
         await request(app)
             .post('/auth/register')
             .send({
@@ -202,7 +213,7 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
     
-        // Se connecter
+        // Log in with the registered credentials
         const responseLogin = await request(app)
             .post('/auth/login')
             .send({
@@ -210,15 +221,17 @@ describe('User Registration and Login', () => {
                 password: 'testpassword'
             });
     
-        expect(responseLogin.status).toBe(302); // Redirection vers la vérification 2FA ou la page suivante
+        // Expect a redirection response (302) to the 2FA verification or next page
+        expect(responseLogin.status).toBe(302);
         expect(responseLogin.header.location).toMatch(/\/auth\/verify_2fa\/.+/);
     });
 
     it('should access the home page without authentication', async () => {
+        // Access the home page without authentication
         const response = await request(app)
             .get('/');
     
-        expect(response.status).toBe(200); // La page d'accueil devrait être accessible sans authentification
+        // Expect a successful response (200)
+        expect(response.status).toBe(200);
     });
-
 });

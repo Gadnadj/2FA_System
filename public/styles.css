@@ -1,4 +1,4 @@
-/* Styles pour la page d'accueil */
+/* Styles for the home page */
 body {
     font-family: Arial, sans-serif;
     display: flex;
@@ -35,7 +35,7 @@ h1 {
     background-color: #0056b3;
 }
 
-/* Styles pour les formulaires de login et register */
+/* Styles for login and register forms */
 .form-container {
     display: flex;
     flex-direction: column;
@@ -95,7 +95,7 @@ input[type="submit"]:hover {
     background-color: #0056b3;
 }
 
-/* Styles pour la page de succès */
+/* Styles for the success page */
 .success-container {
     text-align: center;
     max-width: 600px;
@@ -132,7 +132,7 @@ input[type="submit"]:hover {
     background-color: #0056b3;
 }
 
-/* Styles pour le bouton de retour à l'accueil */
+/* Styles for the back to home button */
 .back-home-button {
     position: absolute;
     top: 20px;
