@@ -1,4 +1,14 @@
-<form method="POST" action="/auth/verify_2fa/<%= userId %>">
-    <input type="text" name="token" placeholder="Enter 2FA token" required>
-    <button type="submit">Verify</button>
-</form>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify 2FA</title>
+</head>
+<body>
+    <form action="/auth/verify_2fa/<%= userId %>" method="POST">
+        <label for="token">Enter 2FA token:</label>
+        <input type="text" id="token" name="token" required>
+        <br>
+        <button type="submit">Verify</button>
+    </form>
+</body>
+</html>
