@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('./models/user');
 const speakeasy = require('speakeasy');
-const QRCode = require('qrcode');
+const qrcode = require('qrcode');
 
 // Route d'enregistrement
 router.post('/register', async (req, res) => {
@@ -14,15 +14,31 @@ router.post('/register', async (req, res) => {
             return res.status(400).send('All fields are required');
         }
 
-        const user = new User({ username, email });
+        const secret = speakeasy.generateSecret({ name: username });
+        const qrCodeUrl = await qrcode.toDataURL(secret.otpauth_url);
+
+        const user = new User({ username, email, fa_secret: secret.base32 });
         await user.setPassword(password);
         await user.save();
-        res.status(201).send('Registration successful');
+
+        res.redirect(`/auth/show_qr?qrCodeUrl=${encodeURIComponent(qrCodeUrl)}`);
     } catch (error) {
         res.status(500).send('Registration failed: ' + error.message);
     }
 });
 
+// Route pour afficher le QR code
+router.get('/show_qr', (req, res) => {
+    const qrCodeUrl = req.query.qrCodeUrl;
+    res.send(`
+        <html>
+        <body>
+            <h1>Scan this QR code with Google Authenticator</h1>
+            <img src="${qrCodeUrl}" alt="QR Code" />
+        </body>
+        </html>
+    `);
+});
 // Route de connexion
 router.post('/login', async (req, res) => {
     try {
