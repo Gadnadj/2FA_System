@@ -39,6 +39,7 @@ router.get('/show_qr', (req, res) => {
         </html>
     `);
 });
+
 // Route de connexion
 router.post('/login', async (req, res) => {
     try {
@@ -52,7 +53,7 @@ router.post('/login', async (req, res) => {
 
             if (isPasswordValid) {
                 const userId = encodeURIComponent(user._id);
-                res.redirect(`/verify_2fa/${userId}`);
+                res.redirect(`/auth/verify_2fa/${userId}`);
                 console.log(user._id)
                 console.log(userId, 'im the right user id')
             } else {
@@ -72,7 +73,7 @@ router.get('/verify_2fa/:userId', (req, res) => {
         <html>
         <body>
             <h1>Vérification 2FA</h1>
-            <form action="/verify_2fa/${req.params.userId}" method="POST">
+            <form action="/auth/verify_2fa/${req.params.userId}" method="POST">
                 <label for="token">Entrez le code 2FA :</label>
                 <input type="text" id="token" name="token" required>
                 <button type="submit">Vérifier</button>
@@ -89,6 +90,7 @@ router.post('/verify_2fa/:userId', async (req, res) => {
         if (!user) {
             return res.status(404).send('User not found');
         }
+        console.log(user._id, 'im the idddddd')
         const verified = speakeasy.totp.verify({
             secret: user.fa_secret,
             encoding: 'base32',
