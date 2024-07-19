@@ -51,8 +51,10 @@ router.post('/login', async (req, res) => {
             console.log('Password is valid:', isPasswordValid);
 
             if (isPasswordValid) {
-                res.redirect(`/verify_2fa/${user._id}`);
+                const userId = encodeURIComponent(user._id);
+                res.redirect(`/verify_2fa/${userId}`);
                 console.log(user._id)
+                console.log(userId, 'im the right user id')
             } else {
                 res.status(401).send('Login failed: Invalid password');
             }
@@ -64,31 +66,22 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Route de configuration de 2FA
-router.post('/verify_2fa/:userId', async (req, res) => {
-    try {
-        const { token } = req.body;
-        const user = await User.findById(req.params.userId);
-        if (!user) {
-            return res.status(404).send('User not found');
-        }
-        const verified = speakeasy.totp.verify({
-            secret: user.fa_secret,
-            encoding: 'base32',
-            token
-        });
-        if (verified) {
-            res.send('2FA verification successful');
-        } else {
-            res.status(401).send('Invalid 2FA token');
-        }
-    } catch (error) {
-        res.status(500).send('2FA verification failed: ' + error.message);
-    }
+// Route de vérification 2FA
+router.get('/verify_2fa/:userId', (req, res) => {
+    res.send(`
+        <html>
+        <body>
+            <h1>Vérification 2FA</h1>
+            <form action="/verify_2fa/${req.params.userId}" method="POST">
+                <label for="token">Entrez le code 2FA :</label>
+                <input type="text" id="token" name="token" required>
+                <button type="submit">Vérifier</button>
+            </form>
+        </body>
+        </html>
+    `);
 });
 
-
-// Route de vérification de 2FA
 router.post('/verify_2fa/:userId', async (req, res) => {
     try {
         const { token } = req.body;
