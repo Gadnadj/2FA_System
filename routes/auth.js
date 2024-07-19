@@ -35,6 +35,10 @@ router.get('/show_qr', (req, res) => {
         <body>
             <h1>Scan this QR code with Google Authenticator</h1>
             <img src="${qrCodeUrl}" alt="QR Code" />
+            <p>Veuillez scanner le QR code pour activer la 2FA. Si vous ne le faites pas, vous ne pourrez pas récupérer votre compte.</p>
+            <form action="/" method="GET">
+                <button type="submit">Valider</button>
+            </form>
         </body>
         </html>
     `);
@@ -54,8 +58,8 @@ router.post('/login', async (req, res) => {
             if (isPasswordValid) {
                 const userId = encodeURIComponent(user._id);
                 res.redirect(`/auth/verify_2fa/${userId}`);
-                console.log(user._id)
-                console.log(userId, 'im the right user id')
+                console.log(user._id);
+                console.log(userId, 'im the right user id');
             } else {
                 res.status(401).send('Login failed: Invalid password');
             }
@@ -90,7 +94,7 @@ router.post('/verify_2fa/:userId', async (req, res) => {
         if (!user) {
             return res.status(404).send('User not found');
         }
-        console.log(user._id, 'im the idddddd')
+        console.log(user._id, 'im the idddddd');
         const verified = speakeasy.totp.verify({
             secret: user.fa_secret,
             encoding: 'base32',
