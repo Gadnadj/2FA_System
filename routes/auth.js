@@ -45,6 +45,27 @@ router.get('/show_qr', (req, res) => {
 });
 
 // Route de connexion
+router.get('/login', (req, res) => {
+    const { error } = req.query;
+    res.send(`
+        <html>
+        <body>
+            <h1>Login</h1>
+            ${error ? `<p style="color: red;">${error}</p>` : ''}
+            <form action="/auth/login" method="POST">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <br>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <br>
+                <button type="submit">Login</button>
+            </form>
+        </body>
+        </html>
+    `);
+});
+
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -61,22 +82,24 @@ router.post('/login', async (req, res) => {
                 console.log(user._id);
                 console.log(userId, 'im the right user id');
             } else {
-                res.status(401).send('Login failed: Invalid password');
+                res.redirect('/auth/login?error=Invalid password');
             }
         } else {
-            res.status(401).send('Login failed: User not found');
+            res.redirect('/auth/login?error=User not found');
         }
     } catch (error) {
-        res.status(500).send('Login failed: ' + error.message);
+        res.redirect(`/auth/login?error=Login failed: ${error.message}`);
     }
 });
 
 // Route de vérification 2FA
 router.get('/verify_2fa/:userId', (req, res) => {
+    const { error } = req.query;
     res.send(`
         <html>
         <body>
             <h1>Vérification 2FA</h1>
+            ${error ? `<p style="color: red;">${error}</p>` : ''}
             <form action="/auth/verify_2fa/${req.params.userId}" method="POST">
                 <label for="token">Entrez le code 2FA :</label>
                 <input type="text" id="token" name="token" required>
@@ -103,7 +126,7 @@ router.post('/verify_2fa/:userId', async (req, res) => {
         if (verified) {
             res.send('2FA verification successful');
         } else {
-            res.status(401).send('Invalid 2FA token');
+            res.redirect(`/auth/verify_2fa/${user._id}?error=Invalid 2FA token`);
         }
     } catch (error) {
         res.status(500).send('2FA verification failed: ' + error.message);
