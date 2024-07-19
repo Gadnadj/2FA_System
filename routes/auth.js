@@ -11,7 +11,7 @@ router.post('/register', async (req, res) => {
         console.log('Received values:', username, email, password);
 
         if (!username || !email || !password) {
-            return res.status(400).send('All fields are required');
+            return res.redirect('/auth/register?error=All fields are required');
         }
 
         const secret = speakeasy.generateSecret({ name: username });
@@ -23,7 +23,7 @@ router.post('/register', async (req, res) => {
 
         res.redirect(`/auth/show_qr?qrCodeUrl=${encodeURIComponent(qrCodeUrl)}`);
     } catch (error) {
-        res.status(500).send('Registration failed: ' + error.message);
+        res.redirect(`/auth/register?error=Registration failed: ${error.message}`);
     }
 });
 
@@ -49,18 +49,21 @@ router.get('/login', (req, res) => {
     const { error } = req.query;
     res.send(`
         <html>
+        <head>
+            <link rel="stylesheet" href="/styles.css">
+        </head>
         <body>
-            <h1>Login</h1>
-            ${error ? `<p style="color: red;">${error}</p>` : ''}
-            <form action="/auth/login" method="POST">
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required>
-                <br>
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-                <br>
-                <button type="submit">Login</button>
-            </form>
+            <div class="form-container">
+                <h1>Login</h1>
+                ${error ? `<p class="error">${error}</p>` : ''}
+                <form action="/auth/login" method="POST">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                    <input type="submit" value="Login">
+                </form>
+            </div>
         </body>
         </html>
     `);
@@ -97,14 +100,19 @@ router.get('/verify_2fa/:userId', (req, res) => {
     const { error } = req.query;
     res.send(`
         <html>
+        <head>
+            <link rel="stylesheet" href="/styles.css">
+        </head>
         <body>
-            <h1>Vérification 2FA</h1>
-            ${error ? `<p style="color: red;">${error}</p>` : ''}
-            <form action="/auth/verify_2fa/${req.params.userId}" method="POST">
-                <label for="token">Entrez le code 2FA :</label>
-                <input type="text" id="token" name="token" required>
-                <button type="submit">Vérifier</button>
-            </form>
+            <div class="form-container">
+                <h1>Vérification 2FA</h1>
+                ${error ? `<p class="error">${error}</p>` : ''}
+                <form action="/auth/verify_2fa/${req.params.userId}" method="POST">
+                    <label for="token">Entrez le code 2FA :</label>
+                    <input type="text" id="token" name="token" required>
+                    <button type="submit">Vérifier</button>
+                </form>
+            </div>
         </body>
         </html>
     `);
