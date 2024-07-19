@@ -2,22 +2,22 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const authRoutes = require('./routes/auth');
-require('dotenv').config(); // Charger les variables d'environnement
+require('dotenv').config();
 const path = require('path');
 
 const app = express();
-app.use(express.json()); // Pour traiter les requêtes POST avec des données JSON
-app.use(express.urlencoded({ extended: true })); // Pour traiter les requêtes POST avec des données URL-encoded
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Configuration des sessions
+// Session configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET, // Utilisez la variable d'environnement
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false } // Utilisez true si vous utilisez HTTPS
+    cookie: { secure: false }
 }));
 
-// Middleware pour vérifier si l'utilisateur est connecté
+// Middleware to check if the user is authenticated
 function isAuthenticated(req, res, next) {
     if (req.session.userId && req.session.is2FAAuthenticated) {
         return next();
@@ -26,13 +26,13 @@ function isAuthenticated(req, res, next) {
     }
 }
 
-// Rendre le middleware disponible pour auth.js
+// Make the middleware available for auth.js
 app.use((req, res, next) => {
     req.isAuthenticated = isAuthenticated;
     next();
 });
 
-// Configuration de Mongoose
+// Mongoose configuration
 mongoose.connect(process.env.DATABASE_URL)
     .then(() => {
         console.log('MongoDB connected successfully');
@@ -43,40 +43,40 @@ mongoose.connect(process.env.DATABASE_URL)
 
 app.use('/auth', authRoutes);
 
-// Servir des fichiers statiques depuis le répertoire "public"
+// Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route pour servir le fichier HTML de login
+// Route to serve the login HTML file
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Route pour servir le fichier HTML d'enregistrement
+// Route to serve the registration HTML file
 app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
 
-// Route pour servir le fichier HTML de vérification 2FA
+// Route to serve the 2FA verification HTML file
 app.get('/verify_2fa/:userId', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'verify_2fa.html'));
 });
 
-// Route de succès (protégée)
+// Success route (protected)
 app.get('/success', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'success.html'));
 });
 
-// Route de base
+// Base route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Middleware pour gérer les routes non trouvées (404)
+// Middleware to handle 404 Not Found
 app.use((req, res, next) => {
     res.status(404).send('404 Not Found');
 });
 
-module.exports = app; // Exporter l'application pour les tests
+module.exports = app; // Export the application for testing
 
 if (require.main === module) {
     app.listen(3000, () => {
