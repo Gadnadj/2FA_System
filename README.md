@@ -5,7 +5,6 @@ This is a simple 2FA (Two-Factor Authentication) system built with Node.js, Expr
 - User registration with hashed password
 - User login with email and password
 - Two-Factor Authentication (2FA) using Google Authenticator
-- Secure routes accessible only after successful 2FA verification
 
 # <strong style="font-size: 24px;">Requirements</strong>
 - Node.js (v12 or later)
