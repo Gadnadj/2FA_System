@@ -40,7 +40,7 @@ app.get('/verify_2fa/:userId', (req, res) => {
 
 // Route de base
 app.get('/', (req, res) => {
-    res.send('Welcome to the 2FA system');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Middleware pour gérer les routes non trouvées (404)
