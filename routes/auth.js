@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('./models/user');
 const speakeasy = require('speakeasy');
 const qrcode = require('qrcode');
+const path = require('path');
 
 // Route d'enregistrement
 router.post('/register', async (req, res) => {
@@ -11,7 +12,7 @@ router.post('/register', async (req, res) => {
         console.log('Received values:', username, email, password);
 
         if (!username || !email || !password) {
-            return res.redirect('/auth/register?error=All fields are required');
+            return res.redirect('/register?error=All fields are required');
         }
 
         const secret = speakeasy.generateSecret({ name: username });
@@ -23,7 +24,7 @@ router.post('/register', async (req, res) => {
 
         res.redirect(`/auth/show_qr?qrCodeUrl=${encodeURIComponent(qrCodeUrl)}`);
     } catch (error) {
-        res.redirect(`/auth/register?error=Registration failed: ${error.message}`);
+        res.redirect(`/register?error=Registration failed: ${error.message}`);
     }
 });
 
@@ -32,6 +33,9 @@ router.get('/show_qr', (req, res) => {
     const qrCodeUrl = req.query.qrCodeUrl;
     res.send(`
         <html>
+        <head>
+            <link rel="stylesheet" href="/styles.css">
+        </head>
         <body>
             <a href="/" class="back-home-button">Home</a>
             <div class="form-container">

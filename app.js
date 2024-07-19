@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const authRoutes = require('./auth');
+const authRoutes = require('./routes/auth');
 require('dotenv').config(); // Charger les variables d'environnement
 const path = require('path');
 
@@ -20,32 +20,31 @@ mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTo
 app.use('/auth', authRoutes);
 
 // Servir des fichiers statiques depuis le répertoire "public"
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Route pour servir le fichier HTML de login
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname,'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // Route pour servir le fichier HTML d'enregistrement
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname,'register.html'));
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
-
-app.get('/success', (req, res) => {
-    res.sendFile(path.join(__dirname,'success.html'));
-});
-
 
 // Route pour servir le fichier HTML de vérification 2FA
 app.get('/verify_2fa/:userId', (req, res) => {
-    res.sendFile(path.join(__dirname, 'verify_2fa.html'));
+    res.sendFile(path.join(__dirname, 'public', 'verify_2fa.html'));
 });
 
+// Route de succès
+app.get('/success', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'success.html'));
+});
 
 // Route de base
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Middleware pour gérer les routes non trouvées (404)
