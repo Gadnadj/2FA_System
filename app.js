@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const session = require('express-session');
 const authRoutes = require('./routes/auth');
 require('dotenv').config(); // Charger les variables d'environnement
 const path = require('path');
@@ -8,8 +9,31 @@ const app = express();
 app.use(express.json()); // Pour traiter les requêtes POST avec des données JSON
 app.use(express.urlencoded({ extended: true })); // Pour traiter les requêtes POST avec des données URL-encoded
 
+// Configuration des sessions
+app.use(session({
+    secret: process.env.SESSION_SECRET, // Utilisez la variable d'environnement
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false } // Utilisez true si vous utilisez HTTPS
+}));
+
+// Middleware pour vérifier si l'utilisateur est connecté
+function isAuthenticated(req, res, next) {
+    if (req.session.userId && req.session.is2FAAuthenticated) {
+        return next();
+    } else {
+        res.redirect('/');
+    }
+}
+
+// Rendre le middleware disponible pour auth.js
+app.use((req, res, next) => {
+    req.isAuthenticated = isAuthenticated;
+    next();
+});
+
 // Configuration de Mongoose
-mongoose.connect(process.env.DATABASE_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.DATABASE_URL)
     .then(() => {
         console.log('MongoDB connected successfully');
     })
@@ -37,8 +61,8 @@ app.get('/verify_2fa/:userId', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'verify_2fa.html'));
 });
 
-// Route de succès
-app.get('/success', (req, res) => {
+// Route de succès (protégée)
+app.get('/success', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'success.html'));
 });
 
@@ -52,6 +76,10 @@ app.use((req, res, next) => {
     res.status(404).send('404 Not Found');
 });
 
-app.listen(3000, () => {
-    console.log('Server started on http://localhost:3000');
-});
+module.exports = app; // Exporter l'application pour les tests
+
+if (require.main === module) {
+    app.listen(3000, () => {
+        console.log('Server started on http://localhost:3000');
+    });
+}

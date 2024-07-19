@@ -12,6 +12,7 @@ router.post('/register', async (req, res) => {
         console.log('Received values:', username, email, password);
 
         if (!username || !email || !password) {
+            console.log('Validation error: All fields are required');
             return res.redirect('/register?error=All fields are required');
         }
 
@@ -24,6 +25,7 @@ router.post('/register', async (req, res) => {
 
         res.redirect(`/auth/show_qr?qrCodeUrl=${encodeURIComponent(qrCodeUrl)}`);
     } catch (error) {
+        console.error('Registration failed:', error);
         res.redirect(`/register?error=Registration failed: ${error.message}`);
     }
 });
