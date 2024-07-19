@@ -33,12 +33,15 @@ router.get('/show_qr', (req, res) => {
     res.send(`
         <html>
         <body>
-            <h1>Scan this QR code with Google Authenticator</h1>
-            <img src="${qrCodeUrl}" alt="QR Code" />
-            <p>Veuillez scanner le QR code pour activer la 2FA. Si vous ne le faites pas, vous ne pourrez pas récupérer votre compte.</p>
-            <form action="/" method="GET">
-                <button type="submit">Valider</button>
-            </form>
+            <a href="/" class="back-home-button">Home</a>
+            <div class="form-container">
+                <h1>Scan this QR code with Google Authenticator</h1>
+                <img src="${qrCodeUrl}" alt="QR Code" />
+                <p>Veuillez scanner le QR code pour activer la 2FA. Si vous ne le faites pas, vous ne pourrez pas récupérer votre compte.</p>
+                <form action="/" method="GET">
+                    <button type="submit">Valider</button>
+                </form>
+            </div>
         </body>
         </html>
     `);
@@ -53,6 +56,7 @@ router.get('/login', (req, res) => {
             <link rel="stylesheet" href="/styles.css">
         </head>
         <body>
+            <a href="/" class="back-home-button">Home</a>
             <div class="form-container">
                 <h1>Login</h1>
                 ${error ? `<p class="error">${error}</p>` : ''}
@@ -104,6 +108,7 @@ router.get('/verify_2fa/:userId', (req, res) => {
             <link rel="stylesheet" href="/styles.css">
         </head>
         <body>
+            <a href="/" class="back-home-button">Home</a>
             <div class="form-container">
                 <h1>Vérification 2FA</h1>
                 ${error ? `<p class="error">${error}</p>` : ''}
@@ -132,13 +137,18 @@ router.post('/verify_2fa/:userId', async (req, res) => {
             token
         });
         if (verified) {
-            res.send('2FA verification successful');
+            res.redirect('/success');
         } else {
             res.redirect(`/auth/verify_2fa/${user._id}?error=Invalid 2FA token`);
         }
     } catch (error) {
         res.status(500).send('2FA verification failed: ' + error.message);
     }
+});
+
+// Route de succès
+router.get('/success', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'success.html'));
 });
 
 module.exports = router;

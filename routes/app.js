@@ -32,6 +32,11 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname,'register.html'));
 });
 
+app.get('/success', (req, res) => {
+    res.sendFile(path.join(__dirname,'success.html'));
+});
+
+
 // Route pour servir le fichier HTML de vérification 2FA
 app.get('/verify_2fa/:userId', (req, res) => {
     res.sendFile(path.join(__dirname, 'verify_2fa.html'));
